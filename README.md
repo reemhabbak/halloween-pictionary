@@ -31,14 +31,7 @@ Each card has five Halloween words, one per category, color-coded to match the c
 
 ## Run it
 
-Open `index.html` in a browser. That’s it.
-
-### Host it free with GitHub Pages
-
-1. Push this repo to GitHub.
-2. Go to **Settings → Pages**.
-3. Under **Build and deployment**, set **Source** to *Deploy from a branch*, pick `main` and `/ (root)`, then **Save**.
-4. After a minute your game is live at `https://<your-username>.github.io/<repo-name>/`.
+Open `https://reemhabbak.github.io/halloween-pictionary/` in your browser.
 
 ## Customize the words
 
