@@ -1,5 +1,6 @@
-# halloween-pictionary
 # 🎃 Halloween Pictionary
+
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 A Halloween-themed Pictionary companion that runs in any browser. No install, no build step, no accounts.
 
@@ -31,7 +32,9 @@ Each card has five Halloween words, one per category, color-coded to match the c
 
 ## Run it
 
-Open `https://reemhabbak.github.io/halloween-pictionary/` in your browser.
+Open ``https://reemhabbak.github.io/halloween-pictionary/`` in a browser. That’s it.
+
+.
 
 ## Customize the words
 
@@ -43,4 +46,4 @@ A single self-contained HTML file with vanilla JavaScript and CSS. Fonts load fr
 
 ## License
 
-[MIT](LICENSE)
+© 2026 Reem Habbak. Licensed under [Creative Commons Attribution-NonCommercial 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (CC BY-NC 4.0). You’re welcome to share and adapt it with credit, but not for commercial use. See [LICENSE](LICENSE).
