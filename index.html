@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Halloween Pictionary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@600;800&family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3E9D6; --surface:#FFF8EC; --ink:#2A1733; --muted:#6E5A72; --line:#D9C9AE;
+  --pumpkin:#D9661C; --pumpkin-ink:#FFF8EC; --card:#FFFDF7; --card-ink:#241629;
+  --P:#EBD54B; --O:#6F9BD8; --A:#CF946A; --D:#4FB38A; --AP:#E06565;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1E1226; --surface:#2B1B35; --ink:#F1E6CF; --muted:#B9A6BD; --line:#46304F;
+    --pumpkin:#F07F2D; --pumpkin-ink:#1E1226; --card:#F6EEDC; --card-ink:#241629;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1E1226; --surface:#2B1B35; --ink:#F1E6CF; --muted:#B9A6BD; --line:#46304F;
+  --pumpkin:#F07F2D; --pumpkin-ink:#1E1226; --card:#F6EEDC; --card-ink:#241629;
+  color-scheme: dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.45}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--pumpkin);outline-offset:2px}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-family:"Grenze Gotisch","Times New Roman",serif;font-weight:800;font-size:clamp(2.4rem,8vw,3.6rem);line-height:.9;margin:0;letter-spacing:.01em}
+h1 small{display:block;font-family:"Figtree",sans-serif;font-weight:600;font-size:.95rem;color:var(--muted);letter-spacing:0;margin-top:6px}
+.icon-btn{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-weight:600}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:780px){.layout{grid-template-columns:1fr}}
+
+/* Turn banner */
+.turn{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.turn h2{font-family:"Grenze Gotisch",serif;font-weight:600;font-size:1.9rem;margin:0;line-height:1}
+.turn p{margin:2px 0 0;color:var(--muted);font-size:.95rem}
+
+/* The card — mirrors the physical Categories card */
+.table{display:flex;justify-content:center;perspective:1200px}
+.card{width:min(100%,380px);aspect-ratio:5/7.4;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.2,1)}
+.card.flipped{transform:rotateY(180deg)}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+.face{position:absolute;inset:0;border-radius:22px;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 18px 40px -18px rgba(0,0,0,.55)}
+.back{background:var(--pumpkin);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--pumpkin-ink);padding:24px;text-align:center;border:10px solid var(--card)}
+.back svg{width:46%;height:auto}
+.back .hint{font-weight:600;font-size:1rem}
+.front{transform:rotateY(180deg);background:var(--card);color:var(--card-ink);padding:22px 18px;display:flex;flex-direction:column}
+.front h3{font-family:"Times New Roman",Georgia,serif;font-weight:400;font-size:2.1rem;margin:0;letter-spacing:.02em;line-height:1}
+.front .rule{height:5px;background:var(--card-ink);margin:8px 0 14px;border-radius:2px}
+.rows{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:8px}
+.row{display:grid;grid-template-columns:52px 1fr;border:1.5px solid var(--card-ink);min-height:52px;text-align:left;padding:0;background:var(--c);transition:transform .15s,box-shadow .15s,opacity .2s}
+.row .tag{display:flex;align-items:center;justify-content:center;border-right:1.5px solid var(--card-ink);font-family:"Times New Roman",Georgia,serif;font-size:1.35rem}
+.row .word{display:flex;align-items:center;gap:8px;padding:6px 12px;font-weight:800;font-size:1.08rem;line-height:1.15;color:#1b1020}
+.row .word .ap{font-size:.8rem;font-weight:800;background:#1b1020;color:#fff;border-radius:4px;padding:1px 6px;white-space:nowrap}
+.row.masked .word{color:transparent;text-shadow:0 0 9px rgba(27,16,32,.55);user-select:none}
+.rows.has-pick .row:not(.picked){opacity:.4}
+.row.picked{transform:scale(1.04);box-shadow:0 0 0 3px var(--card),0 0 0 6px var(--card-ink)}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0 6px}
+.btn{border:2px solid var(--ink);background:transparent;border-radius:12px;padding:11px 18px;font-weight:800;min-width:96px}
+.btn.primary{background:var(--pumpkin);border-color:var(--pumpkin);color:var(--pumpkin-ink)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.helper{text-align:center;color:var(--muted);font-size:.92rem;min-height:1.3em;margin:4px 0 0}
+
+/* Side panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.panel + .panel{margin-top:16px}
+.panel h4{margin:0 0 10px;font-size:1rem}
+
+.timer{display:flex;align-items:center;gap:14px}
+.ring{width:96px;height:96px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Grenze Gotisch",serif;font-size:2.2rem;font-weight:800}
+.ring.low .num{color:var(--AP)}
+.timer-btns{display:flex;flex-direction:column;gap:8px;flex:1}
+.timer-btns .btn{padding:8px 12px;min-width:0}
+
+.teams{display:flex;flex-direction:column;gap:8px}
+.team{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:6px;padding:8px 10px;border-radius:12px;border:2px solid transparent;background:var(--bg)}
+.team.active{border-color:var(--pumpkin)}
+.team input{background:transparent;border:0;color:var(--ink);font:inherit;font-weight:700;min-width:0;width:100%;padding:4px 2px;border-bottom:1px dashed transparent}
+.team input:hover{border-bottom-color:var(--line)}
+.team .score{font-family:"Grenze Gotisch",serif;font-size:1.7rem;font-weight:800;min-width:2ch;text-align:center}
+.sq{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:800;padding:0}
+
+.outcome{display:none;margin-top:14px;padding:14px;border-radius:14px;border:2px dashed var(--pumpkin);text-align:center}
+.outcome.show{display:block}
+.outcome p{margin:0 0 10px;font-weight:700}
+.outcome .opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+
+.settings label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0;font-size:.95rem}
+.settings select{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+.settings input[type=checkbox]{width:20px;height:20px;accent-color:var(--pumpkin)}
+.link{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;font-size:.9rem;margin-top:6px}
+
+.win{position:fixed;inset:0;background:rgba(20,10,26,.82);display:none;align-items:center;justify-content:center;padding:24px;z-index:20}
+.win.show{display:flex}
+.win div{background:var(--surface);color:var(--ink);border-radius:20px;padding:28px;text-align:center;max-width:360px}
+.win h2{font-family:"Grenze Gotisch",serif;font-size:2.6rem;margin:0 0 6px;line-height:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Halloween Pictionary<small>Draw it before the clock strikes midnight</small></h1>
+    <button class="icon-btn" id="themeBtn" aria-label="Toggle light or dark">🌙</button>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="turn">
+        <div>
+          <h2 id="turnName">Pumpkins’ turn</h2>
+          <p id="turnSub">Draw a card to start</p>
+        </div>
+      </div>
+
+      <div class="table">
+        <div class="card" id="card">
+          <div class="face back" id="cardBack">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <path d="M50 22c-3-8 2-14 8-15-4 4-4 9-3 14" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <ellipse cx="50" cy="58" rx="40" ry="32" fill="currentColor" opacity=".18"/>
+              <path d="M30 50l8-8 8 8zM54 50l8-8 8 8zM28 66q22 18 44 0l-6 4-5-5-5 5-5-5-5 5-5-5-5 5z" fill="currentColor"/>
+            </svg>
+            <div class="hint" id="backHint">Tap “Draw card”</div>
+          </div>
+          <div class="face front">
+            <h3>CATEGORIES</h3>
+            <div class="rule"></div>
+            <div class="rows" id="rows"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="drawBtn">Draw card</button>
+        <button class="btn" id="peekBtn" disabled>Peek</button>
+        <button class="btn" id="rollBtn" disabled>Roll category</button>
+        <button class="btn" id="discardBtn" disabled>Discard</button>
+      </div>
+      <p class="helper" id="helper">Only the drawer should look. Tap a row to pick your board square, or roll one.</p>
+
+      <div class="outcome" id="outcome">
+        <p id="outcomeQ">Did your team guess it?</p>
+        <div class="opts" id="outcomeOpts"></div>
+      </div>
+    </main>
+
+    <aside>
+      <section class="panel">
+        <h4>Timer</h4>
+        <div class="timer">
+          <div class="ring" id="ring">
+            <svg viewBox="0 0 100 100" width="96" height="96">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="var(--line)" stroke-width="8"/>
+              <circle id="ringArc" cx="50" cy="50" r="44" fill="none" stroke="var(--pumpkin)" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/>
+            </svg>
+            <div class="num" id="timeNum">60</div>
+          </div>
+          <div class="timer-btns">
+            <button class="btn primary" id="startBtn">Start</button>
+            <button class="btn" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h4>Scores</h4>
+        <div class="teams" id="teams"></div>
+      </section>
+
+      <section class="panel settings">
+        <h4>Settings</h4>
+        <label>Teams
+          <select id="teamCount"><option>2</option><option>3</option><option>4</option></select>
+        </label>
+        <label>Time per turn
+          <select id="timeLen"><option value="30">30 sec</option><option value="60">60 sec</option><option value="90">90 sec</option><option value="120">2 min</option></select>
+        </label>
+        <label>Points to win
+          <select id="target"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="0">No limit</option></select>
+        </label>
+        <label>Surprise All Plays on other rows
+          <input type="checkbox" id="surprise">
+        </label>
+        <label>Sound
+          <input type="checkbox" id="sound">
+        </label>
+        <button class="link" id="newGame">Start a new game</button>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div class="win" id="win"><div><h2 id="winTitle">Pumpkins win!</h2><p>The spirits are pleased.</p><button class="btn primary" id="winBtn">Play again</button></div></div>
+
+<script>
+const CATS = [
+  {k:"P", name:"Person/Place/Animal", c:"var(--P)"},
+  {k:"O", name:"Object", c:"var(--O)"},
+  {k:"A", name:"Action", c:"var(--A)"},
+  {k:"D", name:"Difficult", c:"var(--D)"},
+  {k:"AP", name:"All Play", c:"var(--AP)"}
+];
+const WORDS = {
+  P:["Witch","Vampire","Mummy","Werewolf","Bat","Black cat","Spider","Owl","Raven","Haunted house","Graveyard","Pumpkin patch","Frankenstein’s monster","Zombie","Ghost","Scarecrow","Skeleton","Grim Reaper","Wolf","Rat","Crow","Castle","Cave","Crypt","Mad scientist","Trick-or-treater","Gargoyle","Dracula","Headless Horseman","Swamp","Toad","Snake","Dungeon","Tarantula","Goblin","Cornfield","Bat cave","Lighthouse","Igor","Banshee"],
+  O:["Broomstick","Cauldron","Candy corn","Jack-o’-lantern","Coffin","Tombstone","Candle","Crystal ball","Spell book","Magic wand","Potion","Cobweb","Mask","Candy bucket","Lantern","Skull","Chains","Pitchfork","Eyeball","Caramel apple","Hourglass","Skeleton key","Witch hat","Cape","Fangs","Bandage","Lollipop","Toilet paper","Doorbell","Flashlight","Haystack","Shovel","Chocolate bar","Pillowcase","Rubber spider","Fog machine","Wig","Pumpkin pie","Cupcake","Glow stick"],
+  A:["Trick-or-treating","Carving a pumpkin","Bobbing for apples","Flying on a broom","Casting a spell","Howling","Sneaking","Screaming","Haunting","Rising from the grave","Stirring a cauldron","Knocking","Running away","Hiding","Biting","Creeping","Sweeping","Shivering","Wrapping a mummy","Telling ghost stories","Sorting candy","Sleepwalking","Digging","Levitating","Fortune telling","Trading candy","Decorating","Lurking","Getting lost in a maze","Turning into a bat","Melting","Cackling","Tiptoeing","Jumping out","Ringing a doorbell","Putting on makeup","Hammering a stake","Peeking through fingers","Rattling chains","Brushing fangs"],
+  D:["Superstition","Nightmare","Midnight","Shadow","Fear","Curse","Autumn","Harvest","Echo","Darkness","Invisible","Spirit","Legend","Eclipse","Fog","Goosebumps","Afterlife","Sugar rush","Friday the 13th","Déjà vu","Ghost town","Full moon","Bad luck","Silence","Creepy","Haunted","Spine-chilling","Immortal","Seance","Trick","Treat","Mystery","Daylight saving","Costume contest","Frightened","Graveyard shift","Witching hour","Hallucination","Premonition","Bloodcurdling"],
+  AP:["Monster mash","Witch’s brew","Zombie apocalypse","Costume party","Ghost ship","Black cat crossing","Haunted hayride","Mummy’s tomb","Werewolf at the moon","Vampire bat","Trick or treat","Boo!","Broom closet","Creepy doll","Haunted mirror","Spider web","Candy overload","Pumpkin spice","Skeleton dance","Bubbling cauldron","Graveyard at midnight","Ghost in a sheet","Bats in the belfry","Spooky forest","Creaky stairs","Hayride","Scary movie night","Glowing eyes","Wicked witch","Haunted castle"]
+};
+
+const S = load() || {
+  teams:[{name:"Pumpkins",score:0},{name:"Ghouls",score:0}],
+  turn:0, timeLen:60, target:10, surprise:true, sound:true
+};
+let decks = {}, card = null, pick = null, revealed = false;
+let remaining = S.timeLen, ticking = null, running = false, timerStarted = false;
+
+function load(){ try{ return JSON.parse(localStorage.getItem("hp-state")); }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem("hp-state", JSON.stringify(S)); }catch(e){} }
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function nextWord(k){ if(!decks[k]||!decks[k].length) decks[k]=shuffle(WORDS[k]); return decks[k].pop(); }
+
+const $ = id => document.getElementById(id);
+const cardEl=$("card"), rowsEl=$("rows");
+
+function newCard(){
+  card = {};
+  CATS.forEach(c => card[c.k] = nextWord(c.k));
+  card.surprise = (S.surprise && Math.random() < .3) ? ["P","O","A","D"][Math.floor(Math.random()*4)] : null;
+  pick = null; revealed = true;
+  hideOutcome(); resetTimer();
+  renderCard();
+  cardEl.classList.add("flipped");
+  $("turnSub").textContent = "Drawer: pick your category, then hide the card";
+}
+
+function isAllPlay(k){ return k === "AP" || (card && card.surprise === k); }
+
+function renderCard(){
+  rowsEl.innerHTML = "";
+  rowsEl.classList.toggle("has-pick", !!pick);
+  CATS.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "row" + (pick===c.k ? " picked" : "") + (!revealed ? " masked" : "");
+    b.style.setProperty("--c", c.c);
+    b.setAttribute("aria-label", c.name + (revealed ? ": " + card[c.k] : ""));
+    const apTag = (card.surprise===c.k) ? '<span class="ap">▲ All Play</span>' : "";
+    b.innerHTML = `<span class="tag">${c.k}</span><span class="word">${revealed ? card[c.k] : "••••••"}${revealed?apTag:""}</span>`;
+    b.onclick = () => { if(!timerStarted){ pick = c.k; renderCard(); updateUI(); } };
+    rowsEl.appendChild(b);
+  });
+  updateUI();
+}
+
+function updateUI(){
+  const t = S.teams[S.turn];
+  $("turnName").textContent = t.name + (/s$/i.test(t.name) ? "’ turn" : "’s turn");
+  $("drawBtn").textContent = card ? "Next card" : "Draw card";
+  $("peekBtn").disabled = !card;
+  $("peekBtn").textContent = cardEl.classList.contains("flipped") ? "Hide" : "Peek";
+  $("rollBtn").disabled = !card || timerStarted;
+  $("discardBtn").disabled = !card;
+  if(card && pick){
+    const cat = CATS.find(c=>c.k===pick);
+    $("helper").textContent = isAllPlay(pick)
+      ? `${cat.name} — All Play! Every team draws at once.`
+      : `${cat.name} for ${t.name}. Hide the card and start the timer.`;
+  } else if(card){
+    $("helper").textContent = "Tap a row to pick your board square, or roll one.";
+  }
+  renderTeams();
+}
+
+/* Timer */
+const ARC = 276.5;
+function paintTimer(){
+  $("timeNum").textContent = remaining;
+  $("ringArc").setAttribute("stroke-dashoffset", ARC * (1 - remaining / S.timeLen));
+  $("ring").classList.toggle("low", remaining <= 10);
+  $("startBtn").textContent = running ? "Pause" : (timerStarted && remaining>0 ? "Resume" : "Start");
+}
+function resetTimer(){ clearInterval(ticking); running=false; timerStarted=false; remaining=S.timeLen; paintTimer(); }
+function startPause(){
+  if(running){ clearInterval(ticking); running=false; paintTimer(); return; }
+  if(remaining<=0) remaining=S.timeLen;
+  if(card && !pick){ $("helper").textContent = "Pick a category first (tap a row or roll)."; return; }
+  if(card && cardEl.classList.contains("flipped")){ cardEl.classList.remove("flipped"); }
+  running=true; timerStarted=true; updateUI(); paintTimer(); beep(660,.08);
+  if(card) showOutcome();
+  ticking = setInterval(()=>{
+    remaining--; paintTimer();
+    if(remaining<=5 && remaining>0) beep(880,.06);
+    if(remaining<=0){ clearInterval(ticking); running=false; paintTimer(); beep(220,.6); $("helper").textContent="Time’s up!"; }
+  },1000);
+}
+
+/* Sound */
+let actx=null;
+function beep(freq,dur){
+  if(!S.sound) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type="triangle"; o.frequency.value=freq; g.gain.value=.15;
+    o.connect(g); g.connect(actx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dur); o.stop(actx.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* Outcome */
+function showOutcome(){
+  const box=$("outcome"), opts=$("outcomeOpts"); opts.innerHTML="";
+  if(isAllPlay(pick)){
+    $("outcomeQ").textContent = "All Play — who guessed it first?";
+    S.teams.forEach((t,i)=>{ const b=document.createElement("button"); b.className="btn primary"; b.textContent=t.name; b.onclick=()=>finish(i); opts.appendChild(b); });
+    const n=document.createElement("button"); n.className="btn"; n.textContent="Nobody"; n.onclick=()=>finish(null); opts.appendChild(n);
+  } else {
+    $("outcomeQ").textContent = `Did ${S.teams[S.turn].name} guess it?`;
+    const y=document.createElement("button"); y.className="btn primary"; y.textContent="Got it (+1)"; y.onclick=()=>finish(S.turn);
+    const n=document.createElement("button"); n.className="btn"; n.textContent="Missed — pass turn"; n.onclick=()=>finish(null);
+    opts.append(y,n);
+  }
+  box.classList.add("show");
+}
+function hideOutcome(){ $("outcome").classList.remove("show"); }
+
+function finish(winner){
+  resetTimer(); hideOutcome();
+  if(winner!==null){
+    S.teams[winner].score++;
+    beep(990,.15);
+    // winning team keeps rolling (classic rule); on a miss, play passes on
+    S.turn = winner;
+    if(S.target && S.teams[winner].score >= S.target){ save(); showWin(winner); }
+  } else {
+    S.turn = (S.turn+1) % S.teams.length;
+  }
+  card=null; pick=null;
+  cardEl.classList.remove("flipped");
+  $("backHint").textContent = "Tap “Next card”";
+  $("turnSub").textContent = winner!==null ? `Point to ${S.teams[winner].name}! Draw the next card.` : "Draw a card to start";
+  $("helper").textContent = "Only the drawer should look. Tap a row to pick your board square, or roll one.";
+  save(); updateUI();
+}
+
+function showWin(i){ $("winTitle").textContent = `${S.teams[i].name} win!`; $("win").classList.add("show"); }
+
+/* Teams */
+const DEFAULT_NAMES=["Pumpkins","Ghouls","Bats","Witches"];
+function renderTeams(){
+  const wrap=$("teams"); wrap.innerHTML="";
+  S.teams.forEach((t,i)=>{
+    const d=document.createElement("div"); d.className="team"+(i===S.turn?" active":"");
+    const inp=document.createElement("input"); inp.value=t.name; inp.setAttribute("aria-label","Team name");
+    inp.onchange=()=>{ t.name=inp.value.trim()||DEFAULT_NAMES[i]; save(); updateUI(); };
+    const minus=document.createElement("button"); minus.className="sq"; minus.textContent="−"; minus.setAttribute("aria-label",`Remove a point from ${t.name}`);
+    minus.onclick=()=>{ t.score=Math.max(0,t.score-1); save(); renderTeams(); };
+    const sc=document.createElement("span"); sc.className="score"; sc.textContent=t.score;
+    const plus=document.createElement("button"); plus.className="sq"; plus.textContent="+"; plus.setAttribute("aria-label",`Add a point to ${t.name}`);
+    plus.onclick=()=>{ t.score++; save(); renderTeams(); if(S.target && t.score>=S.target) showWin(i); };
+    d.append(inp,minus,sc,plus); wrap.appendChild(d);
+  });
+}
+
+/* Wiring */
+$("drawBtn").onclick = newCard;
+$("discardBtn").onclick = () => { newCard(); $("turnSub").textContent="Card discarded. Drawer: pick your category"; };
+$("peekBtn").onclick = () => { cardEl.classList.toggle("flipped"); updateUI(); };
+$("rollBtn").onclick = () => { pick = CATS[Math.floor(Math.random()*CATS.length)].k; renderCard(); };
+$("startBtn").onclick = startPause;
+$("resetBtn").onclick = () => { resetTimer(); hideOutcome(); updateUI(); };
+
+$("teamCount").value = S.teams.length;
+$("teamCount").onchange = e => {
+  const n=+e.target.value;
+  while(S.teams.length<n) S.teams.push({name:DEFAULT_NAMES[S.teams.length],score:0});
+  S.teams.length=n; if(S.turn>=n) S.turn=0; save(); updateUI();
+};
+$("timeLen").value = S.timeLen;
+$("timeLen").onchange = e => { S.timeLen=+e.target.value; save(); resetTimer(); };
+$("target").value = S.target;
+$("target").onchange = e => { S.target=+e.target.value; save(); };
+$("surprise").checked = S.surprise;
+$("surprise").onchange = e => { S.surprise=e.target.checked; save(); };
+$("sound").checked = S.sound;
+$("sound").onchange = e => { S.sound=e.target.checked; save(); };
+function newGame(){ S.teams.forEach(t=>t.score=0); S.turn=0; card=null; pick=null; cardEl.classList.remove("flipped"); resetTimer(); hideOutcome(); $("win").classList.remove("show"); $("turnSub").textContent="Draw a card to start"; save(); updateUI(); }
+$("newGame").onclick = () => { if(confirm("Reset all scores?")) newGame(); };
+$("winBtn").onclick = newGame;
+
+/* Theme */
+$("themeBtn").onclick = () => {
+  const root=document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  $("themeBtn").textContent = dark ? "☀️" : "🌙";
+};
+
+paintTimer(); updateUI();
+</script>
+</body>
+</html>
